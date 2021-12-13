@@ -2,3 +2,4 @@ dataset/*
 logs/
 results/
 .ipynb_checkpoints/
+output/
