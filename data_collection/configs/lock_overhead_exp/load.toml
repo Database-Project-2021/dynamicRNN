@@ -1,0 +1,53 @@
+# [auto_bencher]
+# jar_dir = "latest"
+# server_count = "1" # without the sequencer
+# server_client_ratio = "1.0" # client / server
+# max_server_per_machine = "1"
+# max_client_per_machine = "3"
+
+# [vanilladb]
+# "org.vanilladb.core.storage.buffer.BufferMgr.BUFFER_POOL_SIZE" = "1572864" # 6GB
+# "org.vanilladb.core.storage.file.io.IoAllocator.USE_O_DIRECT" = "true"
+
+# [vanillabench]
+# # "org.vanilladb.bench.BenchmarkerParameters.BENCH_TYPE" = "4"
+
+# "org.vanilladb.bench.BenchmarkerParameters.BENCH_TYPE" = "2" # TPCC:2, YCSB:4
+# "org.vanilladb.bench.BenchmarkerParameters.WARM_UP_INTERVAL" = "0"
+# "org.vanilladb.bench.BenchmarkerParameters.BENCHMARK_INTERVAL" = "180000"
+# "org.vanilladb.bench.BenchmarkerParameters.RTE_SLEEP_TIME" = "0"
+# "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES" = "100" # Let's find a better RTE
+# "org.vanilladb.bench.StatisticMgr.GRANULARITY" = "1000"
+
+# [elasql]
+# "org.elasql.server.Elasql.SERVICE_TYPE" = "1"
+# "org.elasql.remote.groupcomm.client.BatchSpcSender.COMM_BATCH_SIZE" = "1"
+
+# [elasqlbench]
+# # "org.elasql.bench.benchmarks.ycsb.ElasqlYcsbConstants.DATABASE_MODE" = "1"
+# # "org.elasql.bench.benchmarks.ycsb.ElasqlYcsbConstants.INIT_RECORD_PER_PART" = "100000"
+
+# "org.elasql.bench.benchmarks.tpcc.ElasqlTpccConstants.PARTITION_STRATEGY" = "1"
+# "org.elasql.bench.benchmarks.tpcc.ElasqlTpccConstants.WAREHOUSE_PER_PART" = "5"
+
+[auto_bencher]
+jar_dir = "latest"
+server_count = "1" # without the sequencer
+server_client_ratio = "1.0" # client / server
+max_server_per_machine = "1"
+max_client_per_machine = "2"
+
+[vanilladb]
+"org.vanilladb.core.storage.buffer.BufferMgr.BUFFER_POOL_SIZE" = "1572864" # 6GB
+"org.vanilladb.core.storage.file.io.IoAllocator.USE_O_DIRECT" = "true"
+
+[vanillabench]
+"org.vanilladb.bench.BenchmarkerParameters.BENCH_TYPE" = "2" # TPCC:2, YCSB:4
+
+[elasql]
+"org.elasql.server.Elasql.SERVICE_TYPE" = "1"
+"org.elasql.remote.groupcomm.client.BatchSpcSender.COMM_BATCH_SIZE" = "1"
+
+[elasqlbench]
+"org.elasql.bench.benchmarks.tpcc.ElasqlTpccConstants.PARTITION_STRATEGY" = "1"
+"org.elasql.bench.benchmarks.tpcc.ElasqlTpccConstants.WAREHOUSE_PER_PART" = "10"

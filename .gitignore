@@ -3,3 +3,6 @@ logs/
 results/
 .ipynb_checkpoints/
 output/
+data_collection/dataset
+data_collection/jars
+data_collection/temp
