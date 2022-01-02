@@ -7,7 +7,7 @@ from scalablerunner.adapter import DBRunnerAdapter
 from cost_estimator import Loader
 
 SERVER_COUNT = 1
-DEST_DIR = '/opt/shared-disk2/sychou/dynamic_rnn/lock_overhead_exp2'
+DEST_DIR = '/opt/shared-disk2/sychou/dynamic_rnn/temp_exp'
 
 def get_temp_dir():
     # Create 'temp' directory
@@ -61,21 +61,25 @@ def process_dataset():
 
     done_map = {}
 
-    files = os.listdir(dest_path)
     while count < total_count:
-        for f in files:
-            fullpath = os.path.join(dest_path, f, 'reports')
-            # if os.path.isfile(fullpath):
-            #     print("File: ", f)
-            if os.path.isdir(fullpath) and (not done_map.get(fullpath, False)):
-                print("Folder: ", f)
-                loader = Loader(f'{fullpath}', server_count=SERVER_COUNT, n_jobs=8)
-                df_features = loader.load_features_as_df(auto_save=True)
-                df_latencies = loader.load_latencies_as_df(auto_save=True)
+        if os.path.isdir(dest_path):
+            files = os.listdir(dest_path)
+            for f in files:
+                fullpath = os.path.join(dest_path, f, 'reports')
+                # if os.path.isfile(fullpath):
+                #     print("File: ", f)
+                if os.path.isdir(fullpath) and (not done_map.get(fullpath, False)):
+                    print("Folder: ", f)
+                    loader = Loader(f'{fullpath}', server_count=SERVER_COUNT, n_jobs=8)
+                    df_features = loader.load_features_as_df(auto_save=True)
+                    df_latencies = loader.load_latencies_as_df(auto_save=True)
 
-                done_map[f'{fullpath}'] = True
-                count += 1
-        time.sleep(5)
+                    done_map[f'{fullpath}'] = True
+                    count += 1
+            time.sleep(5)
+
+def upload_jars(dra: DBRunnerAdapter, server_jar: str, client_jar: str, use_stable: bool):
+    dra.upload_jars(server_jar=server_jar, client_jar=client_jar, use_stable=use_stable)
 
 if __name__ == '__main__':
     HOSTNAME = "140.114.85.15"
@@ -132,44 +136,51 @@ if __name__ == '__main__':
     # [Class, Parameter name, Value]
     PARAMS = [
         ["vanillabench", "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES", "100"],
-        ["vanillabench", "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES", "130"],
-        ["vanillabench", "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES", "45"]
+        # ["vanillabench", "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES", "130"],
+        # ["vanillabench", "org.vanilladb.bench.BenchmarkerParameters.NUM_RTES", "45"]
             ]
 
     # Base configurations
     LOAD_CONFIG = 'configs/lock_overhead_exp/load.toml'
+    
     BENCH_CONFIG = 'configs/lock_overhead_exp/bench.toml'
     
-    config_test = {
-            f'Section Initialize': {
-                'Group Initialize': {
-                    'Call': dra.init_autobencher_load_test_bed,
-                    'Param': {
-                        'server_jar': ['jars/server.jar'], 
-                        'client_jar': ['jars/client.jar'],
-                        'alts': [ARGS_LOAD],
-                        'base_config': [LOAD_CONFIG],
-                        # An arbitrary name for the parameter that want to modify. You can give multiple custom parameters.
-                        # 'custom_param1': PARAMS,
-                    }
-                },
+    # config = {
+    #         f'Section Initialize': {
+    #             'Group Initialize': {
+    #                 'Call': dra.init_autobencher_load_test_bed,
+    #                 'Param': {
+    #                     'server_jar': ['stable_jars/server.jar'], 
+    #                     'client_jar': ['stable_jars/client.jar'],
+    #                     'alts': [ARGS_LOAD],
+    #                     'base_config': [LOAD_CONFIG],
+    #                     # An arbitrary name for the parameter that want to modify. You can give multiple custom parameters.
+    #                     # 'custom_param1': PARAMS,
+    #                 }
+    #             },
+    #         },
+    #     }
+    # tr = TaskRunner(config=config)
+    # tr.run()
+
+    dra.upload_jars(server_jar='jars/server.jar', client_jar='jars/client.jar', use_stable=False)
+    config = {
+        f'Section Benchmark': {
+            'Group Benchmark': {
+                'Call': dra.benchmark,
+                'Param': {
+                    'name_fn': [name_fn],
+                    'alts': [ARGS_BENCH],
+                    'base_config': [BENCH_CONFIG],
+                    # An arbitrary name for the parameter that want to modify. You can give multiple custom parameters.
+                    'custom_param1': PARAMS,
+                    'callback_fn': [move2share_fn],
+                }
             },
-            f'Section Benchmark': {
-                'Group Benchmark': {
-                    'Call': dra.benchmark,
-                    'Param': {
-                        'name_fn': [name_fn],
-                        'alts': [ARGS_BENCH],
-                        'base_config': [BENCH_CONFIG],
-                        # An arbitrary name for the parameter that want to modify. You can give multiple custom parameters.
-                        'custom_param1': PARAMS,
-                        'callback_fn': [move2share_fn],
-                    }
-                },
-                'Group Process Dataset': {
-                    'Call': process_dataset,
-                },
-            }
+            'Group Process Dataset': {
+                'Call': process_dataset,
+            },
         }
-    tr = TaskRunner(config=config_test)
+    }
+    tr = TaskRunner(config=config)
     tr.run()

@@ -5,4 +5,5 @@ results/
 output/
 data_collection/dataset
 data_collection/jars
+data_collection/stable_jars
 data_collection/temp
