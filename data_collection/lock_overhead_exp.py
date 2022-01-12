@@ -6,7 +6,8 @@ from scalablerunner.taskrunner import TaskRunner
 from scalablerunner.adapter import DBRunnerAdapter
 from cost_estimator import Loader
 
-SERVER_COUNT = 1
+SERVER_COUNT_LOAD = 4
+SERVER_COUNT_BENCH = 1
 DEST_DIR = '/opt/shared-disk2/sychou/dynamic_rnn/temp_exp'
 
 def get_temp_dir():
@@ -25,8 +26,8 @@ def get_dataset_dir():
 
     return temp_dir
 
-def config_db_runner_adapter(db_runner_adapter: DBRunnerAdapter) -> DBRunnerAdapter:
-    db_runner_adapter.config(server_count=SERVER_COUNT, jar_dir='latest', sequencer="192.168.1.32", 
+def config_db_runner_adapter(db_runner_adapter: DBRunnerAdapter, server_count: int) -> DBRunnerAdapter:
+    db_runner_adapter.config(server_count=server_count, jar_dir='latest', sequencer="192.168.1.32", 
                              servers=["192.168.1.31", "192.168.1.30", "192.168.1.27", "192.168.1.26"], 
                             #  servers=["192.168.1.31"], 
                              clients=["192.168.1.9", "192.168.1.8"], 
@@ -70,7 +71,7 @@ def process_dataset():
                 #     print("File: ", f)
                 if os.path.isdir(fullpath) and (not done_map.get(fullpath, False)):
                     print("Folder: ", f)
-                    loader = Loader(f'{fullpath}', server_count=SERVER_COUNT, n_jobs=8)
+                    loader = Loader(f'{fullpath}', server_count=SERVER_COUNT_BENCH, n_jobs=8)
                     df_features = loader.load_features_as_df(auto_save=True)
                     df_latencies = loader.load_latencies_as_df(auto_save=True)
 
@@ -97,7 +98,6 @@ if __name__ == '__main__':
     dra.output_log(file_name='temp/total.log')
     # Connect to the remote host, where Auto-Bencher loactes
     dra.connect(hostname=HOSTNAME, username=USERNAME, password=PASSWORD, port=PORT)
-    dra = config_db_runner_adapter(dra)
 
     # Setting behaviors of the DBRunnerAdapter
     # Whether raise exception or not while error occur
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     
     BENCH_CONFIG = 'configs/lock_overhead_exp/bench.toml'
     
+    # dra = config_db_runner_adapter(dra, server_count=SERVER_COUNT_LOAD)
     # config = {
     #         f'Section Initialize': {
     #             'Group Initialize': {
@@ -163,7 +164,8 @@ if __name__ == '__main__':
     # tr = TaskRunner(config=config)
     # tr.run()
 
-    dra.upload_jars(server_jar='jars/server.jar', client_jar='jars/client.jar', use_stable=False)
+    dra = config_db_runner_adapter(dra, server_count=SERVER_COUNT_BENCH)
+    dra.upload_jars(server_jar='jars/server.jar', client_jar='jars/client.jar', use_stable=True)
     config = {
         f'Section Benchmark': {
             'Group Benchmark': {
